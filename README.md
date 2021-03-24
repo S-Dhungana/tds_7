@@ -1,2 +1,2 @@
-# tds_7
+# Translation Data Sciences
 TDS Group 7 Repository
