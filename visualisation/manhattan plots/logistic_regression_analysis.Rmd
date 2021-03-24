@@ -1,0 +1,386 @@
+---
+title: "Logistic_regression_analysis"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(ukbtools)
+```
+
+
+## Results from uunivariate logistic regression analysis
+
+Load results for different analyses
+
+```{r}
+results10<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results10_new2.rds")
+results5<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results5_new2.rds")
+results3<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results3_new2.rds")
+results1<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results1_new2.rds")
+results0<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results0_new2.rds")
+results_coc<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/results_coc_new2.rds")
+```
+
+For annotation 
+```{r}
+comorbidities_categories<- read.csv("/rds/general/project/hda_students_data/live/Group7/General/Final/comorbidities_categories.csv",sep=',')
+```
+
+# 10 years prior to dignosis (10+)
+```{r}
+results10$code=rownames(results10)
+results10= merge(results10, comorbidities_categories, by='code')
+results10<-results10%>%
+  drop_na()
+results10$ICD10=substr(results10$code, 1, 1)
+
+```
+
+```{r}
+results10$logp=-log10(results10$pval)
+bonf10=-log10(0.05/nrow(results10))
+results10$significant=results10$logp>bonf10
+significant_ICD_10=results10$code[which(results10$significant==TRUE)]
+significant_pval=results10$pval[which(results10$significant==TRUE)]
+meaning10=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_10), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_10=as.character(meaning10[,1])
+final10=data.frame(ICD10_10,significant_pval)
+final10 <- final10[order(significant_pval),]
+final10 
+
+saveRDS(final10 , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_10.rds")
+```
+```{r}
+dim(final10)
+```
+
+#12 diseases above significance level
+
+```{r}
+ten_year<-ggplot(
+  results10, aes(as.numeric(row.names(results10)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results10)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results10)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 10 years prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,60)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+ten_year
+```
+
+<!-- ```{r} -->
+<!-- legend_description<-ggplot( -->
+<!--   ten_bis, aes(as.numeric(row.names(ten_bis)), y=-log10(pval), color=Title))+ -->
+<!--   geom_point()+ -->
+<!--   geom_hline(yintercept= -log10(0.05/nrow(ten_bis)), linetype="dashed", color = "red")+ -->
+<!--   geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(ten_bis)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+ -->
+<!--   #ggtitle("Time= 10 years prior to diagnosis of skin cancer") + -->
+<!--   xlab("ICD10 codes")+ -->
+<!--   ylim(0,60)+ -->
+<!--   theme(axis.text.x = element_blank())+ -->
+<!--   theme(aspect.ratio = 1)+ -->
+<!--   theme(legend.box = 'vertical')+ -->
+<!--   theme_void()+ -->
+<!--   theme(legend.key.size = unit(1, 'cm'), #change legend key size -->
+<!--         legend.key.height = unit(1, 'cm'), #change legend key height -->
+<!--         legend.key.width = unit(1.5, 'cm'), #change legend key width -->
+<!--         legend.title = element_text(size=5), #change legend title font size -->
+<!--         legend.text = element_text(size=8)) #change legend text font size -->
+<!-- #+theme(legend.position = "none") -->
+
+<!-- legend_description -->
+<!-- ``` -->
+
+
+```{r}
+ggsave(filename="tenyear.pdf", 
+       plot = ten_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+```{r}
+chap=read.csv('/rds/general/project/hda_students_data/live/Group7/General/Eleonore/chapters5.csv', sep=';')
+chap
+```
+
+
+# 5 years prior to dignosis and above (5+)
+```{r}
+results5$code=rownames(results5)
+results5= merge(results5, comorbidities_categories, by='code')
+results5<-results5%>%
+  drop_na()
+results5$ICD10=substr(results5$code, 1, 1)
+```
+
+```{r}
+results5$logp=-log10(results5$pval)
+bonf5=-log10(0.05/nrow(results5))
+results5$significant=results5$logp>bonf5
+significant_ICD_5=results5$code[which(results5$significant==TRUE)]
+significant_pval=results5$pval[which(results5$significant==TRUE)]
+meaning5=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_5), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_5=as.character(meaning5[,1])
+final5=data.frame(ICD10_5,significant_pval)
+final5 <- final5[order(significant_pval),]
+final5 
+
+saveRDS(final5 , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_5.rds")
+```
+```{r}
+dim(final5)
+```
+#30 diseases above significance level
+
+
+```{r}
+five_year<-ggplot(
+  results5, aes(as.numeric(row.names(results5)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results5)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results5)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 5 years prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,60)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+five_year
+```
+```{r}
+ggsave(filename="fiveyear.pdf", 
+       plot = five_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+
+# 3 years prior to dignosis and above (3+)
+
+```{r}
+results3$code=rownames(results3)
+results3= merge(results3, comorbidities_categories, by='code')
+results3<-results3%>%
+  drop_na()
+results3$ICD10=substr(results3$code, 1, 1)
+```
+
+```{r}
+results3$logp=-log10(results3$pval)
+bonf3=-log10(0.05/nrow(results3))
+results3$significant=results3$logp>bonf3
+significant_ICD_3=results3$code[which(results3$significant==TRUE)]
+significant_pval=results3$pval[which(results3$significant==TRUE)]
+meaning3=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_3), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_3=as.character(meaning3[,1])
+final3=data.frame(ICD10_3,significant_pval)
+final3 <- final3[order(significant_pval),]
+final3
+
+saveRDS(final3 , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_3.rds")
+```
+
+```{r}
+dim(final3)
+```
+```{r}
+three_year<-ggplot(
+  results3, aes(as.numeric(row.names(results3)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results3)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results3)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 3 years prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,50)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+three_year
+```
+```{r}
+
+ggsave(filename="threeyear.pdf", 
+       plot = three_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+
+# 1 year prior to dignosis and above
+```{r}
+results1$code=rownames(results1)
+results1= merge(results1, comorbidities_categories, by='code')
+results1<-results1%>%
+  drop_na()
+results1$ICD10=substr(results1$code, 1, 1)
+```
+
+```{r}
+results1$logp=-log10(results1$pval)
+bonf1=-log10(0.05/nrow(results1))
+results1$significant=results1$logp>bonf1
+significant_ICD_1=results1$code[which(results1$significant==TRUE)]
+significant_pval=results1$pval[which(results1$significant==TRUE)]
+meaning1=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_1), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_1=as.character(meaning1[,1])
+final1=data.frame(ICD10_1,significant_pval)
+final1 <- final1[order(significant_pval),]
+final1
+
+saveRDS(final1 , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_1.rds")
+```
+```{r}
+dim(final1)
+```
+
+```{r}
+one_year<-ggplot(
+  results1, aes(as.numeric(row.names(results1)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results1)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results1)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 1 year prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,50)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+one_year
+```
+
+```{r}
+
+ggsave(filename="oneyear.pdf", 
+       plot = one_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+
+# Right before diagnosis and above 
+```{r}
+results0$code=rownames(results0)
+results0= merge(results0, comorbidities_categories, by='code')
+results0<-results0%>%
+  drop_na()
+results0$ICD10=substr(results0$code, 1, 1)
+```
+
+```{r}
+results0$logp=-log10(results0$pval)
+bonf0=-log10(0.05/nrow(results0))
+results0$significant=results0$logp>bonf0
+significant_ICD_0=results0$code[which(results0$significant==TRUE)]
+significant_pval=results0$pval[which(results0$significant==TRUE)]
+meaning0=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_0), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_0=as.character(meaning0[,1])
+final0=data.frame(ICD10_0,significant_pval)
+final0 <- final0[order(significant_pval),]
+final0
+
+saveRDS(final0 , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_0.rds")
+```
+
+```{r}
+dim(final0)
+```
+
+
+```{r}
+zero_year<-ggplot(
+  results0, aes(as.numeric(row.names(results0)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results0)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results0)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 0 year prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,50)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+
+zero_year
+```
+
+```{r}
+
+ggsave(filename="zeroyear.pdf", 
+       plot = zero_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+
+# Co-occurent diagnosis
+
+```{r}
+results_coc$code=rownames(results_coc)
+results_coc= merge(results_coc, comorbidities_categories, by='code')
+results_coc<-results_coc%>%
+  drop_na()
+results_coc$ICD10=substr(results_coc$code, 1, 1)
+```
+
+
+```{r}
+results_coc$logp=-log10(results_coc$pval)
+bonfco=-log10(0.05/nrow(results_coc))
+results_coc$significant=results_coc$logp>bonfco
+significant_ICD_co=results_coc$code[which(results_coc$significant==TRUE)]
+significant_pval=results_coc$pval[which(results_coc$significant==TRUE)]
+meaning0=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_co), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_0=as.character(meaning0[,1])
+finalco=data.frame(ICD10_co,significant_pval)
+finalco <- finalco[order(significant_pval),]
+finalco
+
+saveRDS(finalc , "/rds/general/project/hda_students_data/live/Group7/General/Final/table_co.rds")
+```
+
+```{r}
+dim(finalco)
+```
+
+
+```{r}
+coc<-ggplot(
+  results_coc, aes(as.numeric(row.names(results_coc)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results_coc)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results_coc)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= 0 year prior to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,50)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+  theme(legend.box = 'horizontal')
+
+coc
+```
+
