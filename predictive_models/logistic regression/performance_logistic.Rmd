@@ -1,0 +1,98 @@
+---
+title: "performance_logistic"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+perf10_new<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/perf10_new.rds")
+perf5_new<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/perf5_new.rds")
+perf3_new<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/perf3_new.rds")
+perf1_new<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/perf1_new.rds")
+```
+
+
+The following code was applied on the different datasets (by timeframe)
+
+```{r}
+# library(gplots)
+# library(caTools)
+# library(ROCR)
+# 
+# set.seed(31)
+# 
+# split = sample.split(data, SplitRatio = 0.8)
+# train = subset(data, split==TRUE)
+# test = subset(data, split==FALSE)
+# 
+# log_reg_pred = glm(status ~ .,  data = data, family=binomial)
+# summary(log_reg_pred)
+# predictTest = predict(log_reg_pred, type="response", newdata=test)
+# table(test$status, predictTest > 0.5)
+# 
+# ROCRpred = prediction(predictTest, test$status)
+# as.numeric(performance(ROCRpred, "auc")@y.values)
+# 
+# perf <- performance(ROCRpred,"tpr","fpr")
+```
+
+
+# 10 years prior and above
+
+Confusion matrix:
+
+    FALSE TRUE
+  0  4259  177
+  1  4161  870
+
+AUC= 0.5664203
+
+
+```{r}
+plot(perf10_new,colorize=TRUE)
+```
+# 5 years prior and above 
+
+ Confusion matrix: 
+ 
+    FALSE TRUE
+  0  4123  313
+  1  3691 1340
+  
+  
+AUC= 0.5978948
+
+```{r}
+plot(perf5_new,colorize=TRUE)
+```
+
+# 3 years prior and above 
+
+    FALSE TRUE
+  0   905 3531
+  1   213 4818
+  
+AUC= 0.5808376
+
+
+```{r}
+plot(perf3_new,colorize=TRUE)
+```
+   
+# 1 year prior and above
+
+    FALSE TRUE
+  0  4204  232
+  1  3489 1542
+  
+AUC= 0.6271002
+
+
+```{r}
+plot(perf1_new,colorize=TRUE)
+```
+```{r}
+
+```
+

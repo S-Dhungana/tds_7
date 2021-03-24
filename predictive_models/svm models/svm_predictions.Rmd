@@ -1,0 +1,170 @@
+---
+title: "svm_predictions"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r include=FALSE}
+library(e1071)
+library(caret)
+library(dplyr)
+library(tidyverse)
+library(caTools)
+library(pROC)
+```
+
+Using logistic regression results which show comorbidities above significance level, these comorbidities are selected to be part of SVM algorithm. 
+
+```{r include=FALSE}
+# 5 years and above
+## Read in data
+table_5 <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Logistic_reg/Univariate/table_5.rds")
+
+## Extract list of features that are shown to be significant 
+table_5
+table_5<- as.data.frame(table_5)
+table_5 <- c(Filter(Negate(is.null),lapply(table_5,levels)))
+table_5$ICD10_5
+ICD10_5 <- sub(" .+", "", table_5$ICD10_5)  %>% str_replace_all('\\.', '')
+ICD10_5 <- c(ICD10_5, 'status')
+ICD10_5
+
+## Filter features that are only part of the significant vector
+test5 <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/test5.rds")
+train5 <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/train5.rds")
+
+train5 <- train5[, colnames(train5) %in% ICD10_5]
+test5 <- test5[, colnames(test5) %in% ICD10_5]
+
+names(train5)
+names(test5)
+
+## SVM training and test datasets
+saveRDS(train5,
+        "/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/train5_svm.rds")
+saveRDS(test5,
+        "/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/test5_svm.rds")
+```
+
+Repeated for model looking at 1 and more years of comorbidities, to extract training and test dates. 
+
+SVM models are created using linear, radial and sigmoid kernels, and used for 5+ year and 1+ year comorbidities models. 
+
+```{r}
+test1 <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/test1_svm.rds")
+train1 <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/train1_svm.rds")
+
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm5fit.rda")
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm5fit_rad.rda")
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm5fit_sig.rda")
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm1fit.rda")
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm1fit_rad.rda")
+load("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/svm1fit_sig.rda")
+```
+
+```{r}
+# Predict fit on test
+y_pred_svmfit5 = predict(svmfit5, newdata = test5[,-1])
+y_pred_svmfit5_rad = predict(svmfit5_rad, newdata = test5[,-1])
+y_pred_svmfit5_sig = predict(svmfit5_sig, newdata = test5[,-1])
+
+y_pred_svmfit1 = predict(svmfit1, newdata = test1[,-1])
+y_pred_svmfit1_rad = predict(svmfit1_rad, newdata = test1[,-1])
+y_pred_svmfit1_sig = predict(svmfit1_sig, newdata = test1[,-1])
+```
+
+```{r}
+# Create confusion matrices
+cmt5 = table(test5$status, y_pred_svmfit5)
+cmt5_rad = table(test5$status, y_pred_svmfit5_rad)
+cmt5_sig = table(test5$status, y_pred_svmfit5_sig)
+
+cmt1 = table(test1$status, y_pred_svmfit1)
+cmt1_rad = table(test1$status, y_pred_svmfit1_rad)
+cmt1_sig = table(test1$status, y_pred_svmfit1_sig)
+
+cm5 = confusionMatrix(as.factor(test5$status), y_pred_svmfit5)
+cm5_rad = confusionMatrix(as.factor(test5$status), y_pred_svmfit5_rad)
+cm5_sig = confusionMatrix(as.factor(test5$status), y_pred_svmfit5_sig)
+
+cm1 = confusionMatrix(as.factor(test1$status), y_pred_svmfit1)
+cm1_rad = confusionMatrix(as.factor(test1$status), y_pred_svmfit1_rad)
+cm1_sig = confusionMatrix(as.factor(test1$status), y_pred_svmfit1_sig)
+```
+
+```{r}
+cat("\n1+ year linear model accuracy = ", round(cm1$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm1$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm1$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm1$overall["Accuracy"],4));
+
+cat("\n1+ year radial model accuracy = ", round(cm1_rad$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm1_rad$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm1_rad$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm1_rad$overall["Accuracy"],4));
+
+cat("\n1+ year sigmoid model accuracy = ", round(cm1_sig$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm1_sig$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm1_sig$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm1_sig$overall["Accuracy"],4));
+
+cat("\n5+ year linear model accuracy = ", round(cm5$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm5$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm5$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm5$overall["Accuracy"],4));
+
+cat("\n5+ year radial model accuracy = ", round(cm5_rad$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm5_rad$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm5_rad$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm5_rad$overall["Accuracy"],4));
+
+cat("\n5+ year sigmoid model accuracy = ", round(cm5_sig$overall["Accuracy"],4), 
+    "Sensitivity =",  round(cm5_sig$byClass["Sensitivity"],4), 
+    "Specificity = ", round(cm5_sig$byClass["Specificity"], 4), 
+    "error rate = ",1 - round(cm5_sig$overall["Accuracy"],4));
+
+```
+
+```{r}
+# ROC value
+roc_svm5 = roc(test5$status , as.numeric(y_pred_svmfit5), quiet=TRUE)
+roc_svm5
+roc_svm5_rad = roc(test5$status , as.numeric(y_pred_svmfit5_rad), quiet=TRUE)
+roc_svm5_rad
+roc_svm5_sig = roc(test5$status , as.numeric(y_pred_svmfit5_sig), quiet=TRUE)
+roc_svm5_sig
+
+roc_svm1 = roc(test1$status , as.numeric(y_pred_svmfit1), quiet=TRUE)
+roc_svm1
+roc_svm1_rad = roc(test1$status , as.numeric(y_pred_svmfit1_rad), quiet=TRUE)
+roc_svm1_rad
+roc_svm1_sig = roc(test1$status , as.numeric(y_pred_svmfit1_sig), quiet=TRUE)
+roc_svm1_sig
+```
+
+```{r}
+auc_svm5 = 0.549
+auc_svm5_rad = 0.549
+auc_svm5_sig = 545
+auc_svm1 = 0.580
+auc_svm1_rad = 0.582
+auc_svm1_sig = 0.575
+```
+
+
+```{r}
+plot(roc_svm5, col = 'skyblue')
+plot(roc_svm5_rad, add = TRUE, col = 'darkgreen')
+plot(roc_svm5_sig, add = TRUE, col = 'tomato')
+plot(roc_svm1, add = TRUE, col = 'orange')
+plot(roc_svm1_rad, add = TRUE, col = 'magenta')
+plot(roc_svm1_sig, add = TRUE, col = 'violet')
+legend('bottomright', legend = c(paste('5+ linear, AUC = ', auc_svm5),
+                                 paste('5+ radial, AUC = ', auc_svm5_rad),
+                                 paste('5+ sigmoid, AUC = ',auc_svm5_sig),
+                                 paste('1+ linear, AUC = ', auc_svm1),
+                                 paste('1+ radial, AUC = ', auc_svm1_rad),
+                                 paste('1+ sigmoid, AUC = ', auc_svm5_sig)),
+       col = c('skyblue', 'darkgreen', 'yellow', 'orange', 'tomato', 'violet'),
+       lty = 1)
+```

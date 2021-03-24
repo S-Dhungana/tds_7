@@ -1,0 +1,65 @@
+---
+title: "descriptive_analysis_biomarker"
+output: pdf_document
+---
+
+## Descriptive analysis for biomarkers 
+```{r warning=FALSE, include=FALSE}
+# Relevant packages
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(openxlsx)) install.packages("openxlsx", repos = "http://cran.us.r-project.org")
+if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
+if(!require(ggcorrplot)) install.packages("ggcorrplot", repos = "http://cran.us.r-project.org")
+if(!require(Hmisc)) install.packages("Hmisc", repos = "http://cran.us.r-project.org")
+
+# Biomarker dataset read
+biomarker_final <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/biomarker_final.rds")
+cases_biomarker <- readRDS('/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/cases_biomarker.rds')
+controls_biomarker <- readRDS('/rds/general/project/hda_students_data/live/Group7/General/Sarvesh/Data/controls_biomarker.rds')
+```
+
+## Dimensions of datasets
+```{r, echo=TRUE}
+dim(biomarker_final)
+```
+
+```{r, echo=TRUE}
+dim(cases_biomarker)
+```
+
+```{r, echo=TRUE}
+dim(controls_biomarker)
+```
+
+
+## Summary of cases and controls
+```{r, echo=TRUE}
+controls_biomarker$eid <- as.character(controls_biomarker$eid)
+summary(controls_biomarker)
+```
+
+```{r, echo=TRUE}
+cases_biomarker$eid <- as.character(cases_biomarker$eid)
+summary(cases_biomarker)
+```
+
+
+## Graph histograms for the dataset
+```{r, echo=TRUE}
+par(mar=c(1,1,1,1))
+hist.data.frame(biomarker_final[, c(2:29)])
+```
+
+
+## Correlation of variables
+```{r, echo=TRUE}
+r <- cor(biomarker_final[, c(2:29)])
+ggcorrplot(r)
+```
+
+
+## Show which t test values are significant between t-test in cases and controls
+```{r, echo=TRUE}
+for(i in c(2:29)){print(c(colnames(biomarker_final)[i],t.test(cases_biomarker[,i],controls_biomarker[,i])$p.value < 0.05))}
+```

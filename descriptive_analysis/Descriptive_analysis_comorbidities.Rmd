@@ -1,0 +1,257 @@
+---
+title: "Descriptive analysis"
+output: html_document
+---
+
+```{r}
+library(ggcorrplot)
+library(dplyr)
+
+```
+
+
+Loading cases and controls
+```{r}
+controls= readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/controls_eid.rds")
+cases=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/cases_eid.rds")
+```
+
+```{r}
+length(controls)
+```
+
+```{r}
+length(cases)
+```
+
+Loading case and controls without dates datasets
+```{r}
+
+no_dates_controls= readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/controls_no_dates.rds")
+no_dates_cases=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/cases_no_dates.rds")
+
+```
+
+
+
+
+Loading comorbidity dataset with respective comorbidity percentage
+```{r}
+comor_df <- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/disease_counts.rds")
+```
+
+
+Cases and controls presence in comorbidity dataset 
+```{r}
+cases_not_hes= !(cases %in% rownames(no_dates_cases))
+controls_not_hes= !(controls %in% rownames(no_dates_controls))
+
+# finding cases that are not in comorbidity dataset (3 ended up being filtered because they had no date of cancer diag)
+cases_no_comor= cases[which(cases_not_hes==TRUE)]
+cases_2= cases[which(cases_not_hes==FALSE)]
+
+# finding controls that have/have no comorbidities 
+controls_no_comor_eid= controls[which(controls_not_hes==TRUE)]
+controls_2= controls[which(controls_not_hes==FALSE)]
+```
+
+
+On average, how many comorbidities have cases and controls?
+```{r}
+no_dates_controls['sumrow',]<-colSums(no_dates_controls)
+no_dates_controls[,'sumcol']<-rowSums(no_dates_controls)
+
+no_dates_cases['sumrow',]<-colSums(no_dates_cases)
+no_dates_cases[,'sumcol']<-rowSums(no_dates_cases)
+
+case_row<-no_dates_cases[,'sumcol']
+con_row<-no_dates_controls[,'sumcol']
+
+df2=data.frame(eid=cases_2,cases=case_row[1:25127])
+names(df2)=c('eids', 'cases')
+
+avg_count_cases= sum(df2$cases)/nrow(df2)
+
+
+df3=data.frame(eid=controls_2,controls=con_row[1:22271])
+names(df3)=c('eids', 'controls')
+
+avg_count_controls= sum(df3$controls)/nrow(df3)
+
+print(avg_count_cases)
+print(avg_count_controls)
+```
+
+# Analysis of comorbidities in our dataset
+
+```{r}
+
+# ordering the prevelance of comorbidities
+cases_ana <- comor_df[order(-comor_df$perc_cases),]
+  
+skincancer =c(c(paste0("C", 430:449)))
+
+# Removing skin cancer from disease list
+skin_filter<-cases_ana[!(rownames(cases_ana) %in% skincancer),]
+skin_filter <- skin_filter[order(-skin_filter$perc_cases),]
+
+```
+
+
+Selecting diseases that are present in more than 5 per cent of cases or controls
+```{r}
+skin_filter_cases<-skin_filter[which (skin_filter$perc_cases> 0.05),]
+skin_filter_controls<-skin_filter[which (skin_filter$perc_controls> 0.05),]
+skin_filter_controls<- skin_filter_controls[order(-skin_filter_controls$perc_controls),]
+
+#keeping record of skin cancer diagnosis only
+only_skin<-cases_ana[(rownames(cases_ana) %in% skincancer),]
+
+#finding the disease meaning 
+only_skin$meaning10_n<-data.frame(t(sapply(as.character(rownames(only_skin)), FUN=ukb_icd_code_meaning)))$meaning
+
+```
+
+#### barplot cases types of melanoma/skin cancer
+```{r}
+plot1<-ggplot(data=only_skin, aes(x=rownames(only_skin), y=as.numeric(cases))) +
+  geom_bar(stat="identity", fill='skyblue') +
+  labs(title = "Repartition of cases in skin cancer and melanoma types") + ylab("Number of cases") + xlab("Disease type")+
+  coord_flip()
+
+plot1
+```
+What do these code mean?
+```{r}
+labels1=unlist(only_skin['meaning10_n'])
+print(labels1)
+```
+# Cases
+
+```{r}
+skin_filter_cases$meaning10_n<-data.frame(t(sapply(as.character(rownames(skin_filter_cases)), FUN=ukb_icd_code_meaning)))$meaning
+skin_filter_cases= skin_filter_cases[3:56,]
+
+
+plot2<-ggplot(data=skin_filter_cases, aes(x=rownames(skin_filter_cases), y=as.numeric(cases))) +
+  geom_bar(stat="identity", fill='skyblue') +
+  labs(title = "Top comorbidities in cases") + ylab("Number of cases") + xlab("Disease type")+
+  coord_flip()
+
+plot2
+
+```
+What do these labels mean?
+
+```{r}
+
+labels2=unlist(skin_filter_cases['meaning10_n'])
+print(labels2)
+```
+# Controls
+
+```{r}
+skin_filter_controls$meaning10_n<-data.frame(t(sapply(as.character(rownames(skin_filter_controls)), FUN=ukb_icd_code_meaning)))$meaning
+
+skin_filter_controls= skin_filter_controls[3:53,]
+
+plot3<-ggplot(data=skin_filter_controls, aes(x=rownames(skin_filter_controls), y=as.numeric(controls))) +
+  geom_bar(stat="identity", fill='skyblue') +
+  labs(title = "Top comorbidities in controls") + ylab("Number of cases") + xlab("Disease type")+
+  coord_flip()
+
+plot3
+```
+
+What do these labels mean?
+
+```{r}
+
+labels3=unlist(skin_filter_controls['meaning10_n'])
+labels3
+```
+# Heatmaps 
+
+```{r}
+
+#Carolina to insert code 
+
+```
+
+
+# Analysis of diagnosis dates 
+
+
+Loading dates of diagnosis datasets with comorbidities for cases and controls
+
+```{r}
+comor_cases <- data.frame(readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/diag_date_recode_ca.rds"))
+comor_controls <- data.frame(readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/diag_date_recode_co.rds"))
+```
+
+Filtering dates dataframe based on top prevalences 
+
+```{r}
+
+#most common disease in cases ICD10 codes
+icd_cases=rownames(skin_filter_cases)
+
+#filtering dates of diagnosis dataset based on top diseases 
+diag_cases<- comor_cases %>%
+  select(contains(icd_cases))%>%
+  filter(I10!=0)
+
+#editing colnames so it only contains ICD code
+colnames(diag_cases) = gsub(pattern = "_date", replacement = "", x = colnames(diag_cases))
+
+table1=data.frame(prop.table(table(diag_cases$I10)))
+df_1=matrix(0, ncol = ncol(diag_cases), nrow = 9)
+df_1=data.frame(df_1)
+rownames(df_1)= table1$Var1
+colnames(df_1)=colnames(diag_cases)
+
+for (i in 1:ncol(diag_cases)){
+  df_1[,i]=data.frame(prop.table(table(factor(diag_cases[,i], levels=rownames(df_1)))))$Freq
+}
+
+```
+
+
+
+```{r}
+df_1
+```
+# Same analysis on controls
+
+```{r}
+
+#most common disease in cases ICD10 codes
+icd_controls=rownames(skin_filter_controls)
+
+#filtering dates of diagnosis dataset based on top diseases 
+diag_controls<- comor_controls %>%
+  select(contains(icd_controls))
+
+#editing colnames so it only contains ICD code
+colnames(diag_controls) = gsub(pattern = "_date", replacement = "", x = colnames(diag_controls))
+
+table2=data.frame(prop.table(table(diag_controls[,1])))
+df_2=matrix(0, ncol = ncol(diag_controls), nrow = 8)
+df_2=data.frame(df_2)
+rownames(df_2)= table2$Var1
+colnames(df_2)=colnames(diag_controls)
+
+for (i in 1:ncol(diag_controls)){
+  df_2[,i]=data.frame(prop.table(table(factor(diag_controls[,i], levels=rownames(df_2)))))$Freq
+}
+
+
+```
+problem to solve: n=one category of 0 -- need to solve vector using no_skin.R
+
+
+
+```{r}
+df_2
+```
+

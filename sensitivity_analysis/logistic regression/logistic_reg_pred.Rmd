@@ -1,0 +1,243 @@
+---
+title: "logistic_regression_prediction"
+output: html_document
+---
+
+# top results from top diseases univariate regressions
+
+
+# top comorbidities + covariates  -5-1 year prior
+
+```{r}
+train_com<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/train_window_15.rds")
+test_com<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/test_window_15.rds")
+
+ICD10_5<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/uni_variate_logistic/significant_ICD_5.rds")
+new_train<- train_com[ ,which(colnames(train_com) %in% ICD10_5)]
+new_train<-cbind(train_com['status'], new_train)
+
+new_test<- test_com[ ,which(colnames(test_com) %in% ICD10_5)]
+new_test<-cbind(test_com['status'], new_test)
+
+
+train=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/train_all_covariates.rds")
+
+train=train[,c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")]
+
+
+train$sex=as.factor(train$sex)
+train$age=as.numeric(train$age)
+train$bmi=as.numeric(train$bmi)
+train$health_rating=as.factor(train$health_rating)
+train$height=as.numeric(train$height)
+train$childhood_sunburn=as.numeric(train$childhood_sunburn)
+train$smoking_status=as.factor(train$smoking_status)
+train$alcohol_intake_frequency=as.factor(train$alcohol_intake_frequency)
+train$skin_colour=as.factor(train$skin_colour)
+train$ease_of_skin_tanning=as.factor(train$ease_of_skin_tanning)
+train$time_spent_outdoors_summer=as.numeric(train$time_spent_outdoors_summer)
+train$vegetable_intake=as.numeric(train$vegetable_intake)
+train$water_intake=as.numeric(train$water_intake)
+train$family_history_cancer=as.factor(train$family_history_cancer)
+
+
+#covariates_interest= c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")
+
+test=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/test_all_covariates.rds")
+
+test=test[,c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")]
+
+
+test$sex=as.factor(test$sex)
+test$age=as.numeric(test$age)
+test$bmi=as.numeric(test$bmi)
+test$health_rating=as.factor(test$health_rating)
+test$height=as.numeric(test$height)
+test$childhood_sunburn=as.numeric(test$childhood_sunburn)
+test$smoking_status=as.factor(test$smoking_status)
+test$alcohol_intake_frequency=as.factor(test$alcohol_intake_frequency)
+test$skin_colour=as.factor(test$skin_colour)
+test$ease_of_skin_tanning=as.factor(test$ease_of_skin_tanning)
+test$time_spent_outdoors_summer=as.numeric(test$time_spent_outdoors_summer)
+test$vegetable_intake=as.numeric(test$vegetable_intake)
+test$water_intake=as.numeric(test$water_intake)
+test$family_history_cancer=as.factor(test$family_history_cancer)
+
+
+test=cbind(new_test,test)
+train=cbind(new_train,train)
+
+```
+
+```{r}
+set.seed(31)
+
+log_reg_pred = glm(status ~ .,  data = train, family=binomial)
+summary(log_reg_pred)
+
+predictTest = predict(log_reg_pred, type="response", newdata=test)
+table(test$status, predictTest > 0.5)
+
+ROCRpred = prediction(predictTest, test$status)
+top_com_cov_auc_5=as.numeric(performance(ROCRpred, "auc")@y.values)
+top_com_cov_auc_5
+
+perf_com_cov_5 <- performance(ROCRpred,"tpr","fpr")
+
+
+```
+
+```{r}
+plot(perf_com_cov_5,colorize=TRUE)
+```
+
+Covariates+ top diseases 0-1 years
+
+# top comorbidities + covariates  -5-1 year prior
+
+```{r}
+train_com<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/train_window_01.rds")
+test_com<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/test_window_01.rds")
+
+ICD10_1<-readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/uni_variate_logistic/significant_ICD_1.rds")
+new_train<- train_com[ ,which(colnames(train_com) %in% ICD10_1)]
+new_train<-cbind(train_com['status'], new_train)
+
+new_test<- test_com[ ,which(colnames(test_com) %in% ICD10_1)]
+new_test<-cbind(test_com['status'], new_test)
+
+
+train=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/train_all_covariates.rds")
+
+train=train[,c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")]
+
+
+train$sex=as.factor(train$sex)
+train$age=as.numeric(train$age)
+train$bmi=as.numeric(train$bmi)
+train$health_rating=as.factor(train$health_rating)
+train$height=as.numeric(train$height)
+train$childhood_sunburn=as.numeric(train$childhood_sunburn)
+train$smoking_status=as.factor(train$smoking_status)
+train$alcohol_intake_frequency=as.factor(train$alcohol_intake_frequency)
+train$skin_colour=as.factor(train$skin_colour)
+train$ease_of_skin_tanning=as.factor(train$ease_of_skin_tanning)
+train$time_spent_outdoors_summer=as.numeric(train$time_spent_outdoors_summer)
+train$vegetable_intake=as.numeric(train$vegetable_intake)
+train$water_intake=as.numeric(train$water_intake)
+train$family_history_cancer=as.factor(train$family_history_cancer)
+
+
+#covariates_interest= c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")
+
+test=readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Model_dataset/test_all_covariates.rds")
+
+test=test[,c("status","age" ,"bmi", "sex", "health_rating" , "height" ,"childhood_sunburn" , "smoking_status" ,"alcohol_intake_frequency",   "skin_colour" ,"ease_of_skin_tanning"    ,   "time_spent_outdoors_summer", "vegetable_intake",   "water_intake",   "family_history_cancer")]
+
+
+test$sex=as.factor(test$sex)
+test$age=as.numeric(test$age)
+test$bmi=as.numeric(test$bmi)
+test$health_rating=as.factor(test$health_rating)
+test$height=as.numeric(test$height)
+test$childhood_sunburn=as.numeric(test$childhood_sunburn)
+test$smoking_status=as.factor(test$smoking_status)
+test$alcohol_intake_frequency=as.factor(test$alcohol_intake_frequency)
+test$skin_colour=as.factor(test$skin_colour)
+test$ease_of_skin_tanning=as.factor(test$ease_of_skin_tanning)
+test$time_spent_outdoors_summer=as.numeric(test$time_spent_outdoors_summer)
+test$vegetable_intake=as.numeric(test$vegetable_intake)
+test$water_intake=as.numeric(test$water_intake)
+test$family_history_cancer=as.factor(test$family_history_cancer)
+
+
+test=cbind(new_test,test)
+train=cbind(new_train,train)
+
+```
+
+```{r}
+set.seed(31)
+
+log_reg_pred = glm(status ~ .,  data = train, family=binomial)
+summary(log_reg_pred)
+
+predictTest = predict(log_reg_pred, type="response", newdata=test)
+table(test$status, predictTest > 0.5)
+
+ROCRpred = prediction(predictTest, test$status)
+top_com_cov_auc_1=as.numeric(performance(ROCRpred, "auc")@y.values)
+top_com_cov_auc_1
+
+perf_com_cov_1 <- performance(ROCRpred,"tpr","fpr")
+
+
+```
+
+```{r}
+plot(perf_com_cov_1 ,colorize=TRUE)
+```
+
+
+#Comparative roc curves
+
+# 1 year 
+
+- top comorbidities :perf_top_1, auc 0.5868597
+- all comorbidities, perf_1, auc= 0.5504779
+perf_covariates, perf_auc_covariates
+perf_com_cov_1, top_com_cov_auc_1
+
+```{r}
+perf_top_1_auc= 0.587
+perf_1_auc=0.550
+perf_top_5_auc=0.552
+perf_5_auc=0.488
+```
+
+
+```{r}
+# Plot ROC curves
+jpeg("pred_1_year.jpg", width = 800, height = 500)
+
+plot(perf_top_1, col = "skyblue", main='Multivariate logistic regression (time= 1 year and above)')
+plot(perf_1, add = TRUE, col = "darkgreen")
+plot(perf_covariates, add = TRUE, col = "tomato")
+plot(perf_com_cov_1, add = TRUE, col = "orange")
+legend("bottomright", legend = c(paste("top comorbidities, AUC = ",
+round(perf_top_1_auc, digits = 3)), paste("all comorbidities, AUC = ",
+round(perf_1_auc, digits = 3)), paste("covariates only, AUC = ",
+round(perf_auc_covariates, digits = 3)),  paste("top comorbidities + covariates, AUC = ",
+round(top_com_cov_auc_1, digits = 3))), col = c("skyblue",
+"darkgreen", "tomato", 'orange'), lty = 1)
+
+dev.off()
+```
+```{r}
+perf_1=perf_top_1
+```
+
+# 5 years
+
+perf_top_5, auc=0.5523043
+perf 5 , auc= 0.4877539
+perf_covariates, perf_auc_covariates
+perf_com_cov_5 , top_com_cov_auc_5
+
+```{r}
+
+jpeg("pred_5_year.jpg", width = 800, height = 500)
+plot(perf_top_5, col = "skyblue",  main='Multivariate logistic regression (time= 5 years and above)')
+plot(perf_5, add = TRUE, col = "darkgreen")
+plot(perf_covariates, add = TRUE, col = "tomato")
+plot(perf_com_cov_5, add = TRUE, col = "orange")
+
+legend("bottomright", legend = c(paste("top comorbidities, AUC = ",
+round(perf_top_5_auc, digits = 3)), paste("all comorbidities, AUC = ",
+round(perf_5_auc, digits = 3)), paste("covariates only, AUC = ",
+round(perf_auc_covariates, digits = 3)),  paste("top comorbidities + covariates, AUC = ",
+round(top_com_cov_auc_5, digits = 3))), col = c("skyblue",
+"darkgreen", "tomato", 'orange'), lty = 1)
+dev.off()
+```
+

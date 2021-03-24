@@ -1,0 +1,167 @@
+---
+title: "Untitled"
+output: html_document
+---
+```{r}
+library(ggplot2)
+library(tidyr)
+library(ukbtools)
+```
+
+
+## Results from uunivariate logistic regression analysis
+
+Load results for different analyses
+
+```{r}
+results10<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/uni_variate_logistic/NEWresults_1.rds")
+results5<- readRDS("/rds/general/project/hda_students_data/live/Group7/General/Final/Sensitivity_analysis/uni_variate_logistic/NEWresults_5.rds")
+
+```
+
+For annotation 
+```{r}
+comorbidities_categories<- read.csv("/rds/general/project/hda_students_data/live/Group7/General/Final/comorbidities_categories.csv",sep=',')
+```
+
+# 10 years prior to dignosis (10+)
+```{r}
+results10$code=rownames(results10)
+results10= merge(results10, comorbidities_categories, by='code')
+results10<-results10%>%
+  drop_na()
+results10$ICD10=substr(results10$code, 1, 1)
+
+```
+
+```{r}
+results10$logp=-log10(results10$pval)
+bonf10=-log10(0.05/nrow(results10))
+results10$significant=results10$logp>bonf10
+significant_ICD_10=results10$code[which(results10$significant==TRUE)]
+significant_pval=results10$pval[which(results10$significant==TRUE)]
+meaning10=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_10), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_10=as.character(meaning10[,1])
+final10=data.frame(ICD10_10,significant_pval)
+final10 <- final10[order(significant_pval),]
+final10 
+
+saveRDS(significant_ICD_10 , 'significant_ICD_1.rds')
+
+saveRDS(final10 , 'table_1_window.rds')
+```
+```{r}
+dim(final10)
+```
+
+#12 diseases above significance level
+
+```{r}
+ten_year<-ggplot(
+  results10, aes(as.numeric(row.names(results10)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results10)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results10)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= time window -1 year to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,60)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+ten_year
+```
+
+<!-- ```{r} -->
+<!-- legend_description<-ggplot( -->
+<!--   ten_bis, aes(as.numeric(row.names(ten_bis)), y=-log10(pval), color=Title))+ -->
+<!--   geom_point()+ -->
+<!--   geom_hline(yintercept= -log10(0.05/nrow(ten_bis)), linetype="dashed", color = "red")+ -->
+<!--   geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(ten_bis)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+ -->
+<!--   #ggtitle("Time= 10 years prior to diagnosis of skin cancer") + -->
+<!--   xlab("ICD10 codes")+ -->
+<!--   ylim(0,60)+ -->
+<!--   theme(axis.text.x = element_blank())+ -->
+<!--   theme(aspect.ratio = 1)+ -->
+<!--   theme(legend.box = 'vertical')+ -->
+<!--   theme_void()+ -->
+<!--   theme(legend.key.size = unit(1, 'cm'), #change legend key size -->
+<!--         legend.key.height = unit(1, 'cm'), #change legend key height -->
+<!--         legend.key.width = unit(1.5, 'cm'), #change legend key width -->
+<!--         legend.title = element_text(size=5), #change legend title font size -->
+<!--         legend.text = element_text(size=8)) #change legend text font size -->
+<!-- #+theme(legend.position = "none") -->
+
+<!-- legend_description -->
+<!-- ``` -->
+
+
+```{r}
+ggsave(filename="1_year_timewindow.pdf", 
+       plot = ten_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
+
+```{r}
+chap=read.csv('/rds/general/project/hda_students_data/live/Group7/General/Eleonore/chapters5.csv', sep=';')
+chap
+```
+
+
+# 5 years prior to dignosis and above (5+)
+```{r}
+results5$code=rownames(results5)
+results5= merge(results5, comorbidities_categories, by='code')
+results5<-results5%>%
+  drop_na()
+results5$ICD10=substr(results5$code, 1, 1)
+```
+
+```{r}
+results5$logp=-log10(results5$pval)
+bonf5=-log10(0.05/nrow(results5))
+results5$significant=results5$logp>bonf5
+significant_ICD_5=results5$code[which(results5$significant==TRUE)]
+significant_pval=results5$pval[which(results5$significant==TRUE)]
+meaning5=t(data.frame(data.frame(t(sapply(as.character(significant_ICD_5), FUN=ukb_icd_code_meaning)))$meaning))
+ICD10_5=as.character(meaning5[,1])
+final5=data.frame(ICD10_5,significant_pval)
+final5 <- final5[order(significant_pval),]
+final5 
+
+saveRDS(significant_ICD_5 , 'significant_ICD_5.rds')
+
+saveRDS(final5 , "table_5_window.rds")
+```
+```{r}
+dim(final5)
+```
+
+```{r}
+five_year<-ggplot(
+  results5, aes(as.numeric(row.names(results5)), y=-log10(pval), color=ICD10))+
+  geom_point()+
+  geom_hline(yintercept= -log10(0.05/nrow(results5)), linetype="dashed", color = "red")+
+  geom_text(aes(label=ifelse(-log10(pval)>-log10(0.05/nrow(results5)),as.character(code),''),hjust=0,vjust=0),show.legend=FALSE)+
+  ggtitle("Time= time window -5 to -1 year to diagnosis of skin cancer") +
+  xlab("ICD10 codes")+
+  ylim(0,60)+
+  theme(axis.text.x = element_blank())+
+  theme(aspect.ratio = 1)+
+   theme(legend.box = 'horizontal')
+#+theme(legend.position = "none")
+
+five_year
+```
+```{r}
+ggsave(filename="5_year_timewindow.pdf", 
+       plot = five_year, 
+       device = cairo_pdf, 
+       width = 210, 
+       height = 297, 
+       units = "mm")
+```
