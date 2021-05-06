@@ -18,5 +18,6 @@ This repository contains all of the code and scripts run by Group 7, and organis
  * **Sensitivity Analysis**: sensitivity analysis conducted for the following models, based on different time windows
     * **Logistic Regression**
     * **LASSO**
+    * **Random Forest** (the sensitivity analyses for Random Forest are included within the ipynb file in the Random Forest subfolder within the Predictive Models directory) 
     * **SVM Models**
  
