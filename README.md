@@ -13,7 +13,7 @@ This repository contains all of the code and scripts run by Group 7, and organis
 * **Predictive Models**: models constructed with the following algorithms, to derive best classification of cases vs. controls by looking at highest value of AUC values
    * **Logistic Regression**
    * **LASSO**
-   * **Random Forest**
+   * **Random Forest** (this includes also the sensitivity analysis as they are both contained in the same file)
    * **SVM Models**
  * **Sensitivity Analysis**: sensitivity analysis conducted for the following models, based on different time windows
     * **Logistic Regression**
